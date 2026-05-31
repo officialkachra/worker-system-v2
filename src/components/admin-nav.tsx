@@ -6,6 +6,7 @@ const TABS: { href: string; label: string }[] = [
   { href: "/admin/workers", label: "Workers" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/payroll", label: "Payroll" },
+  { href: "/admin/analytics", label: "Analytics" },
 ];
 
 export default function AdminNav({

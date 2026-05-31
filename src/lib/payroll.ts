@@ -61,3 +61,18 @@ export function duePaise(logs: ProductionLog[], ledger: LedgerEntry[], workerId:
   }
   return credit - debit;
 }
+
+// Friendly date helpers for gamification UI
+export function shortDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+export function daysInCurrentMonth(): number {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+
+export function todayDayOfMonth(): number {
+  return new Date().getDate();
+}

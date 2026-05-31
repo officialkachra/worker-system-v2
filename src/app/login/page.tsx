@@ -44,7 +44,7 @@ export default function LoginPage() {
         </label>
         <input
           value={id} onChange={e => setId(e.target.value)}
-          placeholder="SA002 ya admin@email.com"
+          placeholder="WRK-0001 ya admin@email.com"
           className="w-full mb-4 px-3 py-2.5 border border-[#e7ddcd] rounded-lg outline-none focus:border-saffron"
         />
         <label className="block text-xs font-bold text-[#5a5042] mb-1">Password</label>
