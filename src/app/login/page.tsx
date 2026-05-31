@@ -15,12 +15,13 @@ export default function LoginPage() {
   async function onSubmit() {
     setErr(""); setBusy(true);
     const supabase = createClient();
-    // If they typed a worker code (e.g. WRK-0001), turn it into the internal email.
-    // If they typed an email, use it as-is (admin/supervisor).
-    const looksLikeCode = /^WRK-\d+$/i.test(id.trim());
-    const email = looksLikeCode
-      ? `${id.trim().toLowerCase()}@${WORKER_DOMAIN}`
-      : id.trim();
+    // If they typed something with @ — treat as email (admin/supervisor).
+    // Otherwise treat as worker code (SA002, WRK-0001, EMP01 — anything).
+    const input = id.trim();
+    const isEmail = input.includes("@");
+    const email = isEmail
+      ? input
+      : `${input.toLowerCase()}@${WORKER_DOMAIN}`;
 
     const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
     setBusy(false);
@@ -43,7 +44,7 @@ export default function LoginPage() {
         </label>
         <input
           value={id} onChange={e => setId(e.target.value)}
-          placeholder="WRK-0001 ya admin@email.com"
+          placeholder="SA002 ya admin@email.com"
           className="w-full mb-4 px-3 py-2.5 border border-[#e7ddcd] rounded-lg outline-none focus:border-saffron"
         />
         <label className="block text-xs font-bold text-[#5a5042] mb-1">Password</label>
