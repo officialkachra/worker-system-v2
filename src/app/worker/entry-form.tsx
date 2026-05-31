@@ -10,25 +10,29 @@ export default function WorkerEntryForm({ products }: { products: P[] }) {
   const router = useRouter();
   const [pid, setPid] = useState(products[0]?.id ?? "");
   const [qty, setQty] = useState(20);
+  const [date, setDate] = useState(new Date().toISOString().slice(0,10));
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
   const rate = products.find(p => p.id === pid)?.rate ?? 0;
   const total = rate * (qty || 0);
+  const today = new Date().toISOString().slice(0,10);
 
   async function submit() {
     if (!pid || qty <= 0) { setMsg("Sahi product aur quantity chunein"); return; }
     setBusy(true); setMsg("");
     const supabase = createClient();
-    // Server snapshots the rate and forces status=pending. Worker can't self-approve.
-    const { error } = await supabase.rpc("submit_production", {
-      p_product_id: pid, p_quantity: qty, p_note: note || null, p_proof: null,
+    // v2 RPC supports date. For workers, p_worker_id stays null so log goes as 'pending'.
+    const { error } = await supabase.rpc("submit_production_v2", {
+      p_product_id: pid, p_quantity: qty,
+      p_work_date: date, p_worker_id: null,
+      p_note: note || null, p_proof: null,
     });
     setBusy(false);
     if (error) { setMsg("Error: " + error.message); return; }
     setMsg("Submitted! Approval ka intezaar / स्वीकृति का इंतज़ार");
-    setQty(20); setNote("");
+    setQty(20); setNote(""); setDate(today);
     router.refresh();
   }
 
@@ -45,6 +49,10 @@ export default function WorkerEntryForm({ products }: { products: P[] }) {
       <Field label="Quantity / मात्रा">
         <input type="number" inputMode="numeric" min={1} value={qty}
           onChange={e => setQty(parseInt(e.target.value) || 0)}
+          className="w-full px-3 py-2.5 border border-[#e7ddcd] rounded-lg outline-none focus:border-saffron text-[15px]" />
+      </Field>
+      <Field label="Date / तारीख (kis din ka kaam)">
+        <input type="date" value={date} max={today} onChange={e => setDate(e.target.value)}
           className="w-full px-3 py-2.5 border border-[#e7ddcd] rounded-lg outline-none focus:border-saffron text-[15px]" />
       </Field>
 
