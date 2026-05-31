@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import AdminNav from "@/components/admin-nav";
 import AddWorkerButton from "./add-worker-button";
 import WorkerRowActions from "./worker-row-actions";
+import WorkersSearch from "./workers-search";
 import { rupee, daysInCurrentMonth } from "@/lib/payroll";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,9 @@ type MonthChamp = {
   total_paise: number; total_qty: number; days_worked: number; rank: number;
 };
 
-export default async function WorkersPage() {
+export default async function WorkersPage({
+  searchParams,
+}: { searchParams: { q?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -27,25 +30,46 @@ export default async function WorkersPage() {
     supabase.rpc("champions_month"),
   ]);
 
-  const W = wkR.data ?? [];
+  const allWorkers = wkR.data ?? [];
   const champs = (monthR.data ?? []) as MonthChamp[];
   const rankMap = new Map(champs.map(c => [c.worker_id, c]));
   const monthDays = daysInCurrentMonth();
+
+  // Client-side-style filter (server) by q
+  const q = (searchParams.q ?? "").trim().toLowerCase();
+  const W = q
+    ? allWorkers.filter(w =>
+        (w.full_name ?? "").toLowerCase().includes(q) ||
+        (w.worker_code ?? "").toLowerCase().includes(q) ||
+        (w.phone ?? "").toLowerCase().includes(q))
+    : allWorkers;
 
   return (
     <>
       <AdminNav current="/admin/workers" adminName={profile.full_name} />
       <div className="max-w-6xl mx-auto px-6 pb-10">
         <div className="bg-white border border-[#e7ddcd] rounded-2xl overflow-hidden shadow-sm">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e7ddcd]">
-            <h2 className="text-[15px] font-bold">Workers ({W.length})</h2>
-            <AddWorkerButton />
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-[#e7ddcd]">
+            <h2 className="text-[15px] font-bold">Workers ({W.length}{q && ` of ${allWorkers.length}`})</h2>
+            <div className="flex gap-3 items-center">
+              <WorkersSearch />
+              <AddWorkerButton />
+            </div>
           </div>
           {W.length === 0 ? (
             <div className="text-center text-[#7a6e5e] py-12 text-sm">
-              <div className="text-3xl mb-2 opacity-40">👥</div>
-              <p className="mb-2">Abhi koi worker nahi hai.</p>
-              <p className="text-xs">Upar &quot;+ Add worker&quot; dabake pehla worker banao.</p>
+              {q ? (
+                <>
+                  <div className="text-3xl mb-2 opacity-40">🔍</div>
+                  <p>Kuch nahi mila "{q}" ke liye</p>
+                </>
+              ) : (
+                <>
+                  <div className="text-3xl mb-2 opacity-40">👥</div>
+                  <p className="mb-2">Abhi koi worker nahi hai.</p>
+                  <p className="text-xs">Upar &quot;+ Add worker&quot; dabake pehla worker banao.</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

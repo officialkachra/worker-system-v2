@@ -76,3 +76,30 @@ export function daysInCurrentMonth(): number {
 export function todayDayOfMonth(): number {
   return new Date().getDate();
 }
+
+// Parse URL search params into a date range (YYYY-MM-DD strings)
+export function parseDateRange(
+  preset?: string | null, from?: string | null, to?: string | null
+): { from: string; to: string; label: string } {
+  // Custom range takes priority
+  if (from && to) return { from, to, label: `${from} → ${to}` };
+
+  const today = new Date();
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+  if (preset === "week" || preset === "7days") {
+    const start = new Date(today); start.setDate(today.getDate() - 6);
+    return { from: fmt(start), to: fmt(today), label: "Last 7 din" };
+  }
+  if (preset === "prev_month") {
+    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const end = new Date(today.getFullYear(), today.getMonth(), 0);
+    return { from: fmt(start), to: fmt(end), label: "Last month" };
+  }
+  if (preset === "all") {
+    return { from: "2020-01-01", to: fmt(today), label: "All time" };
+  }
+  // Default: this month
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  return { from: fmt(start), to: fmt(today), label: "Is month" };
+}

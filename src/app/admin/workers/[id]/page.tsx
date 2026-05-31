@@ -3,16 +3,23 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import AdminNav from "@/components/admin-nav";
 import {
-  rupee, earnedPaise, ledgerSum, duePaise, currentYm, prevYm,
+  rupee, earnedPaise, ledgerSum, duePaise, currentYm, prevYm, parseDateRange,
   type ProductionLog, type LedgerEntry,
 } from "@/lib/payroll";
 import StatementActions from "./statement-actions";
 import ReverseLedgerBtn from "./reverse-ledger-btn";
 import ReverseLogBtn from "./reverse-log-btn";
+import DateRangeFilter from "@/components/date-range-filter";
+import ResetPasswordButton from "./reset-password-button";
 
 export const dynamic = "force-dynamic";
 
-export default async function WorkerStatement({ params }: { params: { id: string } }) {
+export default async function WorkerStatement({
+  params, searchParams,
+}: {
+  params: { id: string };
+  searchParams: { preset?: string; from?: string; to?: string };
+}) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -26,6 +33,9 @@ export default async function WorkerStatement({ params }: { params: { id: string
     .eq("id", wid).single();
   if (!worker) redirect("/admin/workers");
 
+  const range = parseDateRange(searchParams.preset, searchParams.from, searchParams.to);
+
+  // Full data for top-level stats (Is month / Last month / Advance / Due)
   const { data: logs } = await supabase
     .from("production_logs").select("*")
     .eq("worker_id", wid).order("work_date", { ascending: false });
@@ -48,7 +58,7 @@ export default async function WorkerStatement({ params }: { params: { id: string
 
   // Combined timeline: earnings (from approved logs) + ledger entries.
   type Row = { date: string; desc: string; cr: number; dr: number; tag: string; id: string; canReverse: boolean };
-  const rows: Row[] = [
+  const allRows: Row[] = [
     ...L.filter(l => l.status === "approved").map(l => ({
       date: l.work_date,
       desc: `${pname(l.product_id)} × ${l.quantity}`,
@@ -66,6 +76,9 @@ export default async function WorkerStatement({ params }: { params: { id: string
     })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 
+  // Filter to selected date range for the ledger view
+  const rows = allRows.filter(r => r.date >= range.from && r.date <= range.to);
+
   return (
     <>
       <AdminNav current="/admin/workers" adminName={profile.full_name} />
@@ -79,7 +92,10 @@ export default async function WorkerStatement({ params }: { params: { id: string
             <h2 className="font-serif text-2xl font-bold">{worker.full_name}</h2>
             <p className="text-sm text-[#7a6e5e]">{worker.worker_code} · {worker.phone ?? "no phone"}</p>
           </div>
-          <StatementActions workerId={wid} workerName={worker.full_name} />
+          <div className="flex gap-2 items-center">
+            <ResetPasswordButton workerId={wid} workerName={worker.full_name} workerCode={worker.worker_code ?? ""} />
+            <StatementActions workerId={wid} workerName={worker.full_name} />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -96,9 +112,10 @@ export default async function WorkerStatement({ params }: { params: { id: string
         </div>
 
         <div className="bg-white border border-[#e7ddcd] rounded-xl overflow-hidden">
-          <h2 className="text-[15px] font-bold px-5 py-3.5 border-b border-[#e7ddcd]">
-            Ledger — har transaction
-          </h2>
+          <div className="px-5 py-3.5 border-b border-[#e7ddcd] flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-[15px] font-bold">Ledger — {range.label}</h2>
+            <DateRangeFilter defaultPreset="month" />
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr>{["Date","Description","Credit (+)","Debit (−)","Type",""].map((h,i)=>

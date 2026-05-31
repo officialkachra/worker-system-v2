@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LogoutButton from "@/components/logout-button";
+import ChangePasswordButton from "@/components/change-password-button";
 
 const TABS: { href: string; label: string }[] = [
   { href: "/admin", label: "Dashboard" },
@@ -19,7 +20,10 @@ export default function AdminNav({
           <h1 className="font-serif text-2xl font-bold">SanskritAgain Workers</h1>
           <p className="text-sm text-[#7a6e5e]">{adminName} · admin</p>
         </div>
-        <LogoutButton />
+        <div className="flex gap-2 items-center">
+          <ChangePasswordButton variant="light" />
+          <LogoutButton />
+        </div>
       </div>
       <nav className="flex gap-1 border-b border-[#e7ddcd] mb-5 overflow-x-auto">
         {TABS.map(t => {

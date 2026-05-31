@@ -6,6 +6,7 @@ import {
 } from "@/lib/payroll";
 import WorkerEntryForm from "./entry-form";
 import LogoutButton from "@/components/logout-button";
+import ChangePasswordButton from "@/components/change-password-button";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,10 @@ export default async function WorkerHome() {
         <div className="absolute -right-4 -top-4 text-6xl opacity-10">🙏</div>
         <div className="flex items-center justify-between mb-1">
           <div className="text-xs text-[#c9bba6]">नमस्ते 🙏</div>
-          <LogoutButton />
+          <div className="flex gap-2">
+            <ChangePasswordButton />
+            <LogoutButton />
+          </div>
         </div>
         <div className="font-serif text-2xl font-bold">{me?.full_name}</div>
         <div className="text-[11px] text-[#c9bba6] font-mono">{me?.worker_code}</div>
