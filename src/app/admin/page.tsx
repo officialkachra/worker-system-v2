@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import {
-  rupee, earnedPaise, ledgerSum, duePaise, currentYm, prevYm,
+  rupee, earnedPaise, ledgerSum, duePaise, currentYm, prevYm, shortDate,
   type ProductionLog, type LedgerEntry,
 } from "@/lib/payroll";
 import ApprovalActions from "./approval-actions";
@@ -75,11 +75,12 @@ export default async function AdminHome() {
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead><tr>{["Worker","Product","Qty","Amount","Action"].map(h =>
+              <thead><tr>{["Date","Worker","Product","Qty","Amount","Action"].map(h =>
                 <th key={h} className="text-left px-5 py-2.5 text-[11px] text-[#7a6e5e] uppercase tracking-wide border-b border-[#e7ddcd]">{h}</th>)}</tr></thead>
               <tbody>
                 {pending.map(l => (
                   <tr key={l.id} className="border-b border-[#f2ebdd] last:border-0 hover:bg-[#fdfaf4]">
+                    <td className="px-5 py-2.5 whitespace-nowrap font-mono text-xs">{shortDate(l.work_date)}</td>
                     <td className="px-5 py-2.5">{wname(l.worker_id)}</td>
                     <td className="px-5 py-2.5">{pname(l.product_id)}</td>
                     <td className="px-5 py-2.5">{l.quantity}</td>

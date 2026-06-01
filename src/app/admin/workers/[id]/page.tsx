@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import AdminNav from "@/components/admin-nav";
 import {
-  rupee, earnedPaise, ledgerSum, duePaise, currentYm, prevYm, parseDateRange,
+  rupee, earnedPaise, ledgerSum, duePaise, currentYm, prevYm, parseDateRange, monthLabel,
   type ProductionLog, type LedgerEntry,
 } from "@/lib/payroll";
 import StatementActions from "./statement-actions";
@@ -66,13 +66,15 @@ export default async function WorkerStatement({
       tag: "earning",
       id: l.id, canReverse: true,
     })),
-    ...Led.map(e => ({
+    // Skip 'earning' kind ledger entries — they're duplicates of production_logs created by approve_log RPC.
+    // Existing data stays safe in DB; we just don't show them to avoid double-display.
+    ...Led.filter(e => e.kind !== "earning").map(e => ({
       date: e.created_at.slice(0, 10),
       desc: e.description || e.kind,
       cr: e.credit_paise, dr: e.debit_paise,
       tag: e.kind,
       id: e.id,
-      canReverse: e.kind !== "earning" && e.kind !== "reversal",
+      canReverse: e.kind !== "reversal",
     })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 
@@ -99,8 +101,8 @@ export default async function WorkerStatement({
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <Stat label="Is month bana" value={rupee(cur)} hint="May 2026" accent />
-          <Stat label="Last month bana" value={rupee(prev)} hint="April 2026" muted />
+          <Stat label="Is month bana" value={rupee(cur)} hint={monthLabel(currentYm())} accent />
+          <Stat label="Last month bana" value={rupee(prev)} hint={monthLabel(prevYm())} muted />
           <Stat label="Advance diya" value={rupee(adv)} hint="paisa pehle diya" />
           <Stat label="Total gaya" value={rupee(paid + adv)} hint="paid + advance" />
         </div>

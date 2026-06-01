@@ -49,17 +49,26 @@ export function ledgerSum(
 }
 
 // Net due. Reversal entries automatically cancel since they have opposite credit/debit.
-// Formula: SUM(credits) - SUM(debits) across ALL entries (including earnings from logs).
+// IMPORTANT: 'earning' ledger entries are DUPLICATES of production_logs (created by approve_log RPC).
+// We skip them here to avoid double-counting. Source of truth = production_logs.
 export function duePaise(logs: ProductionLog[], ledger: LedgerEntry[], workerId: string): number {
   const earned = earnedPaise(logs, workerId);
   let credit = earned;
   let debit = 0;
   for (const e of ledger) {
     if (e.worker_id !== workerId) continue;
+    if (e.kind === "earning") continue; // skip duplicates of production_logs
     credit += e.credit_paise;
     debit += e.debit_paise;
   }
   return credit - debit;
+}
+
+// Pretty month label, e.g. "Jun 2026"
+export function monthLabel(ymStr: string): string {
+  const [y, m] = ymStr.split("-").map(Number);
+  const d = new Date(y, m - 1, 1);
+  return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
 
 // Friendly date helpers for gamification UI
